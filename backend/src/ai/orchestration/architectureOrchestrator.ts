@@ -1,4 +1,6 @@
 import { ArchitectureModelSchema, type ArchitectureModel, type RequirementAnalysis } from '@archspace/shared';
+import { buildRetrievedContext } from '../../modules/rag/Retriever.js';
+import { buildArchitectureUserPrompt } from '../prompts/architectPrompt.js';
 import { createArchitecture } from '../../modules/architecture/ArchitectureService.js';
 import { analyzeRequirements } from '../../modules/requirements/RequirementService.js';
 import type { ProjectContext } from '../providers/AIProvider.js';
@@ -40,8 +42,12 @@ export async function generateArchitectureWithAI(
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      // Step 1: Call AI provider
-      const rawContent = await provider.generateArchitecture(requirements, context);
+      // RAG: retrieve relevant architectural knowledge
+      const retrievedContext = buildRetrievedContext(requirements);
+      console.log(`[System Designer RAG] Retrieved ${retrievedContext ? 'context' : 'no context'} for requirements`);
+
+      const augmentedRequirements = buildArchitectureUserPrompt(requirements, context, retrievedContext);
+      const rawContent = await provider.generateArchitecture(augmentedRequirements, context);
 
       // Step 2: Parse JSON
       let parsed: unknown;

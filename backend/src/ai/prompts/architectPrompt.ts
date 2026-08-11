@@ -124,3 +124,40 @@ export const ARCHITECT_SYSTEM_PROMPT = `You are a senior software architect. You
 - Include authentication service if authentication is required
 - Generate realistic database schemas with proper types, primary keys, and foreign keys
 - Respond with ONLY the JSON object, nothing else`;
+
+/**
+ * Build the full user prompt including RAG-retrieved context.
+ */
+export function buildArchitectureUserPrompt(
+  requirements: string,
+  context: import('../providers/AIProvider.js').ProjectContext,
+  retrievedContext: string = '',
+): string {
+  const parts: string[] = [];
+
+  parts.push(`## Project Requirements
+
+Project Name: ${context.projectName}
+Description: ${context.description}
+Expected Scale: ${context.expectedScale}
+Frontend Preference: ${context.frontendPreference}
+Backend Preference: ${context.backendPreference}
+Database Preference: ${context.databasePreference}
+Authentication: ${context.authenticationMethod}
+
+Requirements:
+${requirements}`);
+
+  if (retrievedContext) {
+    parts.push(retrievedContext);
+  }
+
+  parts.push(`## Instructions
+
+Analyze the requirements above and produce a complete system architecture as a JSON object.
+Use the retrieved architecture knowledge as guidance — do NOT blindly copy it.
+Adapt the knowledge to the specific requirements, scale, and technology preferences stated above.
+Respond with ONLY the JSON object following the schema in your system prompt.`);
+
+  return parts.join('\n\n');
+}

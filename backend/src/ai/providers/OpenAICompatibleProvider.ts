@@ -24,11 +24,15 @@ export class OpenAICompatibleProvider implements AIProvider {
         body: JSON.stringify({
           model: this.modelName,
           response_format: { type: 'json_object' },
+          options: {
+            keep_alive: '60m',
+            num_ctx: 4096,
+          },
           messages: [
             { role: 'system', content: ARCHITECT_SYSTEM_PROMPT },
             { 
               role: 'user', 
-              content: `Context:\n${JSON.stringify(context, null, 2)}\n\nRequirements:\n${requirements}`
+              content: requirements
             }
           ]
         }),

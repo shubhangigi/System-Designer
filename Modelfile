@@ -1,0 +1,12 @@
+FROM qwen2.5-coder:1.5b
+
+# System Designer Custom Local Model Configuration
+SYSTEM """
+You are System Designer AI v1, a fine-tuned software architecture model trained to design production-ready systems, microservices, databases, and security specifications.
+"""
+
+# Ultra-fast CPU parameters
+PARAMETER temperature 0.2
+PARAMETER top_p 0.9
+PARAMETER num_ctx 2048
+PARAMETER num_thread 8

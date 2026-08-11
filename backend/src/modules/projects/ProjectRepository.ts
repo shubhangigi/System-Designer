@@ -72,16 +72,21 @@ function rowToVersionRecord(row: any): ArchitectureVersionRecord {
 // Repository Implementation
 // ---------------------------------------------------------------------------
 
-export async function listProjects() {
+export async function listProjects(userId?: string) {
   try {
-    const result = await query(`
+    let sql = `
       SELECT p.id, p.name, p.description, p.updated_at, a.status,
              COALESCE((SELECT MAX(version) FROM architecture_versions v WHERE v.project_id = p.id), 1) as current_version
       FROM projects p
       LEFT JOIN architectures a ON p.id = a.project_id
-      ORDER BY p.updated_at DESC
-    `);
-
+    `;
+    const params: any[] = [];
+    if (userId) {
+      sql += ' WHERE p.user_id = $1';
+      params.push(userId);
+    }
+    sql += ' ORDER BY p.updated_at DESC';
+    const result = await query(sql, params);
     return result.rows.map((row) => ({
       id: row.id,
       name: row.name,
@@ -91,8 +96,9 @@ export async function listProjects() {
       version: Number(row.current_version),
     }));
   } catch (dbErr: any) {
-    // Fallback to memory
-    return Array.from(memProjects.values()).map((p) => ({
+    const allProjects = Array.from(memProjects.values());
+    const filtered = userId ? allProjects.filter(p => (p as any).userId === userId) : allProjects;
+    return filtered.map((p) => ({
       id: p.id,
       name: p.input.name,
       description: p.input.description,
@@ -105,6 +111,7 @@ export async function listProjects() {
 
 export async function createProjectRecord(params: {
   id?: string;
+  userId?: string;
   input: ProjectInput;
   analysis: RequirementAnalysis;
   architecture: ArchitectureModel;
@@ -117,8 +124,8 @@ export async function createProjectRecord(params: {
     return await withTransaction(async (client) => {
       // 1. Insert project
       await client.query(
-        `INSERT INTO projects (id, name, description, requirements, input_json, analysis_json, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `INSERT INTO projects (id, name, description, requirements, input_json, analysis_json, user_id, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          ON CONFLICT (id) DO UPDATE SET
            name = EXCLUDED.name,
            description = EXCLUDED.description,
@@ -133,6 +140,7 @@ export async function createProjectRecord(params: {
           params.input.requirements,
           JSON.stringify(params.input),
           JSON.stringify(params.analysis),
+          params.userId ?? null,
           now,
           now,
         ],
@@ -189,6 +197,7 @@ export async function createProjectRecord(params: {
         createdAt: now.toISOString(),
         updatedAt: now.toISOString(),
       };
+      if (params.userId) (record as any).userId = params.userId;
       memProjects.set(projectId, record);
       return record;
     });
@@ -203,6 +212,7 @@ export async function createProjectRecord(params: {
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
     };
+    if (params.userId) (record as any).userId = params.userId;
     memProjects.set(projectId, record);
 
     const versionRecord: ArchitectureVersionRecord = {
@@ -231,32 +241,45 @@ export async function saveProject(project: ProjectRecord) {
   });
 }
 
-export async function getProject(id: string): Promise<ProjectRecord | null> {
+export async function getProject(id: string, userId?: string): Promise<ProjectRecord | null> {
   try {
-    const result = await query(
-      `SELECT p.*, a.architecture_json, a.generation_metadata
+    let sql = `SELECT p.*, a.architecture_json, a.generation_metadata
        FROM projects p
        LEFT JOIN architectures a ON p.id = a.project_id
-       WHERE p.id = $1`,
-      [id],
-    );
-
-    if (result.rows.length === 0) return memProjects.get(id) ?? null;
+       WHERE p.id = $1`;
+    const params: any[] = [id];
+    if (userId) {
+      sql += ' AND p.user_id = $2';
+      params.push(userId);
+    }
+    const result = await query(sql, params);
+    if (result.rows.length === 0) {
+      const memProject = memProjects.get(id) ?? null;
+      if (userId && memProject && (memProject as any).userId !== userId) return null;
+      return memProject;
+    }
     return rowToProjectRecord(result.rows[0]);
   } catch (dbErr: any) {
-    return memProjects.get(id) ?? null;
+    const project = memProjects.get(id) ?? null;
+    if (userId && project && (project as any).userId !== userId) return null;
+    return project;
   }
 }
 
-export async function deleteProject(id: string): Promise<boolean> {
+export async function deleteProject(id: string, userId?: string): Promise<boolean> {
   let dbDeleted = false;
   try {
-    const result = await query(`DELETE FROM projects WHERE id = $1`, [id]);
+    let sql = 'DELETE FROM projects WHERE id = $1';
+    const params: any[] = [id];
+    if (userId) {
+      sql += ' AND user_id = $2';
+      params.push(userId);
+    }
+    const result = await query(sql, params);
     dbDeleted = (result.rowCount ?? 0) > 0;
   } catch (dbErr: any) {
-    // Ignore DB error for in-memory fallback
+    // Ignore
   }
-
   const memDeleted = memProjects.delete(id);
   memVersions.delete(id);
   return dbDeleted || memDeleted;

@@ -1,4 +1,5 @@
 import archiver from 'archiver';
+import { authenticate } from '../middleware/auth.js';
 import { Router } from 'express';
 import { ProjectInputSchema, type ArchitectureModel } from '@archspace/shared';
 import { analyzeCodeFiles } from '../modules/analysis/CodebaseAnalysisService.js';
@@ -74,15 +75,17 @@ function handleAIError(error: unknown, res: import('express').Response) {
     });
   }
   const message = error instanceof Error ? error.message : 'Unknown error';
-  console.error('[ArchSpace Routes Error]:', message);
+  console.error('[SystemDesigner Routes Error]:', message);
   return res.status(500).json({ error: 'Internal server error' });
 }
 
 // ---- Routes -----------------------------------------------------------------
 
-projectRoutes.get('/projects', async (_req, res) => {
+projectRoutes.use(authenticate);
+
+projectRoutes.get('/projects', async (req, res) => {
   try {
-    const projects = await listProjects();
+    const projects = await listProjects(req.user?.id);
     res.json(projects);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -99,11 +102,17 @@ projectRoutes.post('/projects', async (req, res) => {
       result = generateArchitectureWithHeuristic(input);
     } else {
       const context = projectContextFromInput(input);
-      result = await generateArchitectureWithAI(input.requirements, context);
+      try {
+        result = await generateArchitectureWithAI(input.requirements, context);
+      } catch (aiErr: any) {
+        console.warn('[SystemDesigner] AI generation unavailable, using heuristic fallback:', aiErr?.message);
+        result = generateArchitectureWithHeuristic(input);
+      }
     }
 
     const project = await createProjectRecord({
       id: result.architecture.id,
+      userId: req.user?.id,
       input,
       analysis: result.analysis,
       architecture: result.architecture,
@@ -124,7 +133,7 @@ projectRoutes.post('/projects', async (req, res) => {
 
 projectRoutes.get('/projects/:id', async (req, res) => {
   try {
-    const project = await getProject(req.params.id);
+    const project = await getProject(req.params.id, req.user?.id);
     if (!project) return res.status(404).json({ error: 'Project not found' });
     return res.json(project);
   } catch (err: any) {
@@ -134,7 +143,7 @@ projectRoutes.get('/projects/:id', async (req, res) => {
 
 projectRoutes.delete('/projects/:id', async (req, res) => {
   try {
-    const deleted = await deleteProject(req.params.id);
+    const deleted = await deleteProject(req.params.id, req.user?.id);
     if (!deleted) return res.status(404).json({ error: 'Project not found' });
     return res.json({ success: true, message: 'Project deleted' });
   } catch (err: any) {
@@ -144,7 +153,7 @@ projectRoutes.delete('/projects/:id', async (req, res) => {
 
 projectRoutes.put('/projects/:id/architecture', async (req, res) => {
   try {
-    const project = await getProject(req.params.id);
+    const project = await getProject(req.params.id, req.user?.id);
     if (!project) return res.status(404).json({ error: 'Project not found' });
 
     const architecture = req.body.architecture || req.body;
@@ -160,7 +169,7 @@ projectRoutes.put('/projects/:id/architecture', async (req, res) => {
       expectedVersion,
     );
 
-    const updatedProject = await getProject(req.params.id);
+    const updatedProject = await getProject(req.params.id, req.user?.id);
     return res.json({
       ...updatedProject,
       version: saved.version,
@@ -173,7 +182,7 @@ projectRoutes.put('/projects/:id/architecture', async (req, res) => {
 
 projectRoutes.post('/projects/:id/architecture/approve', async (req, res) => {
   try {
-    const project = await getProject(req.params.id);
+    const project = await getProject(req.params.id, req.user?.id);
     if (!project) return res.status(404).json({ error: 'Project not found' });
 
     const approvedArchitecture: ArchitectureModel = {
@@ -200,7 +209,7 @@ projectRoutes.post('/projects/:id/architecture/approve', async (req, res) => {
 
 projectRoutes.post('/projects/:id/architecture/propose-change', async (req, res) => {
   try {
-    const project = await getProject(req.params.id);
+    const project = await getProject(req.params.id, req.user?.id);
     if (!project) return res.status(404).json({ error: 'Project not found' });
     const instruction = String(req.body.instruction ?? '');
     const change = proposeArchitectureChange(project.architecture, instruction);
@@ -212,7 +221,7 @@ projectRoutes.post('/projects/:id/architecture/propose-change', async (req, res)
 
 projectRoutes.post('/projects/:id/architecture/apply-change', async (req, res) => {
   try {
-    const project = await getProject(req.params.id);
+    const project = await getProject(req.params.id, req.user?.id);
     if (!project) return res.status(404).json({ error: 'Project not found' });
 
     const instruction = String(req.body.instruction ?? 'Apply architecture change');
@@ -238,7 +247,7 @@ projectRoutes.post('/projects/:id/architecture/apply-change', async (req, res) =
 
 projectRoutes.post('/projects/:id/validate', async (req, res) => {
   try {
-    const project = await getProject(req.params.id);
+    const project = await getProject(req.params.id, req.user?.id);
     if (!project) return res.status(404).json({ error: 'Project not found' });
     const findings = validateCanonicalArchitecture(project.architecture);
     const hasErrors = findings.some((f) => f.severity === 'ERROR');
@@ -256,7 +265,7 @@ projectRoutes.post('/projects/:id/validate', async (req, res) => {
 // AI-powered architecture generation/regeneration
 projectRoutes.post('/projects/:id/architecture/generate', async (req, res) => {
   try {
-    const project = await getProject(req.params.id);
+    const project = await getProject(req.params.id, req.user?.id);
     if (!project) return res.status(404).json({ error: 'Project not found' });
 
     const requirements = String(req.body.requirements ?? project.input.requirements);
@@ -319,7 +328,7 @@ projectRoutes.get('/projects/:id/architecture/versions/:version', async (req, re
 
 projectRoutes.get('/projects/:id/scaffold', async (req, res) => {
   try {
-    const project = await getProject(req.params.id);
+    const project = await getProject(req.params.id, req.user?.id);
     if (!project) return res.status(404).json({ error: 'Project not found' });
     const files = generateScaffold(project.architecture);
     return res.json({ files, tree: buildFileTree(files) });
@@ -330,7 +339,7 @@ projectRoutes.get('/projects/:id/scaffold', async (req, res) => {
 
 projectRoutes.post('/projects/:id/analyze-codebase', async (req, res) => {
   try {
-    const project = await getProject(req.params.id);
+    const project = await getProject(req.params.id, req.user?.id);
     if (!project) return res.status(404).json({ error: 'Project not found' });
     const files = Array.isArray(req.body.files) ? req.body.files : [];
     const analysis = analyzeCodeFiles(files);
@@ -347,7 +356,7 @@ projectRoutes.post('/projects/:id/analyze-codebase', async (req, res) => {
 
 projectRoutes.post('/projects/:id/compare', async (req, res) => {
   try {
-    const project = await getProject(req.params.id);
+    const project = await getProject(req.params.id, req.user?.id);
     if (!project) return res.status(404).json({ error: 'Project not found' });
 
     let actualArchitecture: ArchitectureModel;
@@ -368,7 +377,7 @@ projectRoutes.post('/projects/:id/compare', async (req, res) => {
 
 projectRoutes.get('/projects/:id/export/architecture.json', async (req, res) => {
   try {
-    const project = await getProject(req.params.id);
+    const project = await getProject(req.params.id, req.user?.id);
     if (!project) return res.status(404).json({ error: 'Project not found' });
     res.setHeader('Content-Type', 'application/json');
     return res.send(JSON.stringify(project.architecture, null, 2));
@@ -379,7 +388,7 @@ projectRoutes.get('/projects/:id/export/architecture.json', async (req, res) => 
 
 projectRoutes.get('/projects/:id/export/project.zip', async (req, res) => {
   try {
-    const project = await getProject(req.params.id);
+    const project = await getProject(req.params.id, req.user?.id);
     if (!project) return res.status(404).json({ error: 'Project not found' });
     const archive = archiver('zip', { zlib: { level: 9 } });
     res.setHeader('Content-Type', 'application/zip');

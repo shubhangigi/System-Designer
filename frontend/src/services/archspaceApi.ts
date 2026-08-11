@@ -1,126 +1,75 @@
 import type { ArchitectureModel, ProjectInput } from '@archspace/shared';
 
-const jsonHeaders = { 'Content-Type': 'application/json' };
+const API_BASE = '/api';
 
-export async function listProjects() {
-  const response = await fetch('/api/projects');
-  if (!response.ok) throw new Error(await response.text());
-  return response.json();
-}
-
-export async function getProject(projectId: string) {
-  const response = await fetch(`/api/projects/${projectId}`);
-  if (!response.ok) throw new Error(await response.text());
-  return response.json();
-}
-
-export async function createProject(input: ProjectInput) {
-  const response = await fetch('/api/projects', {
-    method: 'POST',
-    headers: jsonHeaders,
-    body: JSON.stringify(input),
+async function apiFetch(path: string, options?: RequestInit) {
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options?.headers || {}),
+    },
   });
-  if (!response.ok) throw new Error(await response.text());
+  if (response.status === 401) {
+    // Redirect to login on auth failure
+    window.location.href = '/login';
+    throw new Error('Session expired. Redirecting to login.');
+  }
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    const err = new Error(body.error || `Request failed (${response.status})`);
+    (err as any).code = body.code;
+    (err as any).status = response.status;
+    throw err;
+  }
   return response.json();
 }
 
-export async function deleteProject(projectId: string) {
-  const response = await fetch(`/api/projects/${projectId}`, { method: 'DELETE' });
-  if (!response.ok) throw new Error(await response.text());
-  return response.json();
+export async function listProjects() { return apiFetch('/projects'); }
+export async function getProject(id: string) { return apiFetch(`/projects/${id}`); }
+export async function createProject(input: ProjectInput) {
+  return apiFetch('/projects', { method: 'POST', body: JSON.stringify(input) });
 }
-
-export async function saveArchitecture(
-  projectId: string,
-  architecture: ArchitectureModel,
-  changeDescription?: string,
-  expectedVersion?: number,
-) {
-  const response = await fetch(`/api/projects/${projectId}/architecture`, {
+export async function deleteProject(id: string) {
+  return apiFetch(`/projects/${id}`, { method: 'DELETE' });
+}
+export async function saveArchitecture(projectId: string, architecture: ArchitectureModel, changeDescription?: string, expectedVersion?: number) {
+  return apiFetch(`/projects/${projectId}/architecture`, {
     method: 'PUT',
-    headers: jsonHeaders,
     body: JSON.stringify({ architecture, changeDescription, expectedVersion }),
   });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ error: 'Failed to save architecture' }));
-    const error = new Error(errorData.error || 'Failed to save architecture');
-    (error as any).code = errorData.code;
-    throw error;
-  }
-  return response.json();
 }
-
 export async function approveArchitecture(projectId: string) {
-  const response = await fetch(`/api/projects/${projectId}/architecture/approve`, { method: 'POST' });
-  if (!response.ok) throw new Error(await response.text());
-  return response.json();
+  return apiFetch(`/projects/${projectId}/architecture/approve`, { method: 'POST' });
 }
-
 export async function proposeChange(projectId: string, instruction: string) {
-  const response = await fetch(`/api/projects/${projectId}/architecture/propose-change`, {
-    method: 'POST',
-    headers: jsonHeaders,
-    body: JSON.stringify({ instruction }),
+  return apiFetch(`/projects/${projectId}/architecture/propose-change`, {
+    method: 'POST', body: JSON.stringify({ instruction }),
   });
-  if (!response.ok) throw new Error(await response.text());
-  return response.json();
 }
-
 export async function applyChange(projectId: string, instruction?: string) {
-  const response = await fetch(`/api/projects/${projectId}/architecture/apply-change`, {
-    method: 'POST',
-    headers: jsonHeaders,
-    body: JSON.stringify({ instruction }),
+  return apiFetch(`/projects/${projectId}/architecture/apply-change`, {
+    method: 'POST', body: JSON.stringify({ instruction }),
   });
-  if (!response.ok) throw new Error(await response.text());
-  return response.json();
 }
-
-export async function getScaffold(projectId: string) {
-  const response = await fetch(`/api/projects/${projectId}/scaffold`);
-  if (!response.ok) throw new Error(await response.text());
-  return response.json();
-}
-
+export async function getScaffold(projectId: string) { return apiFetch(`/projects/${projectId}/scaffold`); }
 export async function analyzeCodebase(projectId: string, files: Array<{ path: string; content: string }>) {
-  const response = await fetch(`/api/projects/${projectId}/analyze-codebase`, {
-    method: 'POST',
-    headers: jsonHeaders,
-    body: JSON.stringify({ files }),
+  return apiFetch(`/projects/${projectId}/analyze-codebase`, {
+    method: 'POST', body: JSON.stringify({ files }),
   });
-  if (!response.ok) throw new Error(await response.text());
-  return response.json();
 }
-
 export async function generateArchitecture(projectId: string, requirements?: string) {
-  const response = await fetch(`/api/projects/${projectId}/architecture/generate`, {
-    method: 'POST',
-    headers: jsonHeaders,
-    body: JSON.stringify({ requirements }),
+  return apiFetch(`/projects/${projectId}/architecture/generate`, {
+    method: 'POST', body: JSON.stringify({ requirements }),
   });
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({ error: 'Architecture generation failed' }));
-    const error = new Error(body.error || 'Architecture generation failed');
-    (error as any).code = body.code;
-    throw error;
-  }
-  return response.json();
 }
-
 export async function getArchitectureVersions(projectId: string) {
-  const response = await fetch(`/api/projects/${projectId}/architecture/versions`);
-  if (!response.ok) throw new Error(await response.text());
-  return response.json();
+  return apiFetch(`/projects/${projectId}/architecture/versions`);
 }
-
 export async function getArchitectureVersion(projectId: string, version: number) {
-  const response = await fetch(`/api/projects/${projectId}/architecture/versions/${version}`);
-  if (!response.ok) throw new Error(await response.text());
-  return response.json();
+  return apiFetch(`/projects/${projectId}/architecture/versions/${version}`);
 }
-
 export async function validateProjectArchitecture(projectId: string) {
-  const response = await fetch(`/api/projects/${projectId}/validate`, { method: 'POST' });
-  if (!response.ok) throw new Error(await response.text());
-  return response.json();
+  return apiFetch(`/projects/${projectId}/validate`, { method: 'POST' });
 }
