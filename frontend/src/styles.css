@@ -4,43 +4,47 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-/* --- CSS Custom Properties (Design Tokens) --- */
+/* --- CSS Custom Properties (Design Tokens — Light Warm Beige & Espresso Aesthetic) --- */
 :root {
-  /* Colors */
-  --color-bg: #0f1117;
-  --color-bg-secondary: #161b27;
-  --color-bg-card: #1a2035;
-  --color-bg-input: #1e2640;
-  --color-border: #2a3550;
-  --color-border-hover: #3d4f72;
+  /* Warm Light Beige, Oat & Espresso Palette (Matching User Reference Screenshot) */
+  --color-bg: #F8F4EE;               /* Light Warm Off-White / Cream Main Background */
+  --color-bg-secondary: #F2EBE1;     /* Soft Light Oat Beige Sidebar & Topbar */
+  --color-bg-card: #FFFFFF;          /* Pure Crisp Cream-White Cards */
+  --color-bg-input: #F5EEE6;         /* Soft Light Warm Latte Input */
+  --color-border: #E8DCCF;           /* Soft Sand Beige Border */
+  --color-border-hover: #C5B09E;     /* Warm Soft Taupe Border Hover */
 
-  --color-primary: #4f8ef7;
-  --color-primary-hover: #6ba3ff;
-  --color-primary-dark: #2563eb;
-  --color-primary-glow: rgba(79, 142, 247, 0.15);
+  --color-primary: #734E36;          /* Rich Warm Espresso Coffee Brown */
+  --color-primary-hover: #5C3D28;    /* Deep Roasted Chestnut Brown */
+  --color-primary-dark: #452D1D;     /* Dark Cocoa */
+  --color-primary-glow: rgba(115, 78, 54, 0.12);
 
-  --color-success: #22c55e;
-  --color-success-bg: rgba(34, 197, 94, 0.1);
-  --color-warning: #f59e0b;
-  --color-warning-bg: rgba(245, 158, 11, 0.1);
-  --color-error: #ef4444;
-  --color-error-bg: rgba(239, 68, 68, 0.1);
-  --color-info: #06b6d4;
-  --color-info-bg: rgba(6, 182, 212, 0.1);
+  --color-accent-gold: #D4A359;      /* Elegant Warm Soft Gold */
+  --color-accent-cream: #FBF8F3;     /* Warm Milk Cream */
+  --color-accent-rose: #C88A7A;      /* Dusty Warm Terracotta Rose */
 
-  --color-text-primary: #f1f5f9;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted: #64748b;
+  --color-success: #5F826B;          /* Warm Soft Sage Green */
+  --color-success-bg: rgba(95, 130, 107, 0.12);
+  --color-warning: #C88D44;          /* Warm Amber Gold */
+  --color-warning-bg: rgba(200, 141, 68, 0.12);
+  --color-error: #B8584D;            /* Soft Muted Red */
+  --color-error-bg: rgba(184, 88, 77, 0.12);
+  --color-info: #8C7865;             /* Warm Taupe */
+  --color-info-bg: rgba(140, 120, 101, 0.12);
 
-  /* Node colors */
-  --node-frontend: #3b82f6;
-  --node-backend: #10b981;
-  --node-database: #8b5cf6;
-  --node-cache: #f59e0b;
-  --node-queue: #ef4444;
-  --node-external: #06b6d4;
-  --node-auth: #ec4899;
-  --node-storage: #14b8a6;
+  --color-text-primary: #2C1E16;     /* Deep Rich Espresso Text */
+  --color-text-secondary: #6B5545;   /* Warm Roasted Taupe Secondary Text */
+  --color-text-muted: #9E8977;       /* Soft Sand Muted Text */
+
+  /* Node colors (Warm Editorial Canvas Palette) */
+  --node-frontend: #734E36;
+  --node-backend: #5F826B;
+  --node-database: #8C7865;
+  --node-cache: #C88D44;
+  --node-queue: #B8584D;
+  --node-external: #908477;
+  --node-auth: #C88A7A;
+  --node-storage: #A08369;
 
   /* Spacing */
   --space-1: 4px;
@@ -56,6 +60,7 @@
   --space-20: 80px;
 
   /* Typography */
+  --font-serif: Georgia, 'Playfair Display', 'Times New Roman', serif;
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-size-xs: 11px;
   --font-size-sm: 13px;
@@ -67,18 +72,18 @@
   --font-size-3xl: 36px;
   --font-size-4xl: 48px;
 
-  /* Border radius */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  /* Border radius (Organic Soft Curved Shapes) */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 30px;
   --radius-full: 9999px;
 
   /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
-  --shadow-primary: 0 0 20px rgba(79, 142, 247, 0.2);
+  --shadow-sm: 0 2px 8px rgba(44,30,22,0.04);
+  --shadow-md: 0 8px 24px rgba(44,30,22,0.07);
+  --shadow-lg: 0 16px 40px rgba(44,30,22,0.1);
+  --shadow-primary: 0 6px 20px rgba(115, 78, 54, 0.25);
 
   /* Transitions */
   --transition-fast: 150ms ease;
@@ -100,19 +105,54 @@ body {
   font-family: var(--font-family);
   font-size: var(--font-size-base);
   color: var(--color-text-primary);
-  background: var(--color-bg);
+  background-color: var(--color-bg);
+  /* Techy Dot Grid + Organic Autumn Wind & Floral Gradient Texture */
+  background-image: 
+    /* 1. Techy Architectural Blueprint Dot Matrix */
+    radial-gradient(circle at 1px 1px, rgba(107, 70, 43, 0.09) 1.2px, transparent 0),
+    /* 2. Organic Windy Autumn Light Sweep (Top Right) */
+    radial-gradient(ellipse 65% 50% at 85% 10%, rgba(212, 163, 89, 0.14) 0%, transparent 70%),
+    /* 3. Flowery Sienna Organic Ambient Warmth (Bottom Left) */
+    radial-gradient(ellipse 55% 65% at 15% 90%, rgba(200, 138, 122, 0.12) 0%, transparent 75%);
+  background-size: 24px 24px, 100% 100%, 100% 100%;
+  background-attachment: fixed;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  position: relative;
+}
+
+/* Organic Windy Flowing Waves & Floral Tech Overlay */
+body::before {
+  content: "";
+  position: fixed;
+  top: -20%;
+  left: -20%;
+  width: 140%;
+  height: 140%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='800' viewBox='0 0 800 800'%3E%3Cpath d='M-100 200 C150 100 350 400 600 200 C850 0 950 300 1100 200' stroke='%236B462B' stroke-width='2' fill='none'/%3E%3Cpath d='M-100 400 C200 300 400 600 700 400 C950 200 1050 500 1200 400' stroke='%23D4A359' stroke-width='2' fill='none'/%3E%3Cpath d='M100 100 Q 130 70, 160 100 Q 130 130, 100 100 Z' fill='%23C88A7A' opacity='0.7'/%3E%3Cpath d='M650 550 Q 680 520, 710 550 Q 680 580, 650 550 Z' fill='%23D4A359' opacity='0.7'/%3E%3Ccircle cx='300' cy='250' r='3' fill='%236B462B'/%3E%3Cline x1='300' y1='250' x2='350' y2='220' stroke='%236B462B' stroke-width='1' stroke-dasharray='2 2'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 600px 600px;
+  animation: floatWind 45s ease-in-out infinite alternate;
+}
+
+@keyframes floatWind {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(-25px, 20px) rotate(1.5deg); }
 }
 
 * { margin-top: 0; }
 
 h1, h2, h3, h4, h5, h6 {
   color: var(--color-text-primary);
-  font-weight: 600;
-  line-height: 1.3;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  line-height: 1.25;
   margin-bottom: var(--space-3);
+  letter-spacing: -0.01em;
 }
 
 h1 { font-size: var(--font-size-2xl); }
@@ -191,6 +231,7 @@ hr {
   font-size: var(--font-size-base);
   color: var(--color-text-primary);
   line-height: 1.1;
+  font-family: var(--font-serif);
 }
 
 .sidebar-logo-tagline {
@@ -221,8 +262,8 @@ hr {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
   font-weight: 500;
@@ -237,13 +278,15 @@ hr {
 
 .nav-link:hover {
   color: var(--color-text-primary);
-  background: rgba(255,255,255,0.05);
+  background: rgba(115, 78, 54, 0.08);
   text-decoration: none;
 }
 
 .nav-link.active {
-  color: var(--color-primary);
-  background: var(--color-primary-glow);
+  color: #FFFFFF !important;
+  background: var(--color-primary) !important;
+  box-shadow: 0 4px 12px rgba(115, 78, 54, 0.25);
+  font-weight: 600;
 }
 
 .nav-link.disabled {
@@ -369,17 +412,20 @@ hr {
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-sm);
+  padding: 10px 22px;
+  border-radius: var(--radius-full);
   font-size: var(--font-size-sm);
-  font-weight: 500;
+  font-weight: 600;
   font-family: var(--font-family);
   cursor: pointer;
-  border: 1px solid transparent;
-  transition: all var(--transition-fast);
+  border: 1px solid rgba(229, 195, 132, 0.2);
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
   white-space: nowrap;
-  line-height: 1.5;
+  line-height: 1.4;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 3px 12px rgba(15,10,7,0.4);
 }
 
 .btn:focus-visible {
@@ -388,30 +434,34 @@ hr {
 }
 
 .btn-primary {
-  background: var(--color-primary);
-  color: #fff;
-  border-color: var(--color-primary);
+  background: #6B462B;
+  color: #FFFFFF;
+  border: 1px solid #573720;
+  box-shadow: 0 4px 14px rgba(107, 70, 43, 0.25);
 }
 
 .btn-primary:hover {
-  background: var(--color-primary-hover);
-  border-color: var(--color-primary-hover);
-  box-shadow: var(--shadow-primary);
+  background: #543620;
+  border-color: #402816;
+  box-shadow: 0 6px 20px rgba(107, 70, 43, 0.38);
+  transform: translateY(-1px);
+  color: #FFFFFF;
   text-decoration: none;
-  color: #fff;
 }
 
 .btn-secondary {
-  background: var(--color-bg-card);
-  color: var(--color-text-primary);
-  border-color: var(--color-border);
+  background: #F5EEE6;
+  color: #2C1E16;
+  border: 1px solid #E6DCCF;
 }
 
 .btn-secondary:hover {
-  background: var(--color-bg-input);
-  border-color: var(--color-border-hover);
+  background: #EBE0D3;
+  border-color: #C5B09E;
+  color: #2C1E16;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(44, 30, 22, 0.08);
   text-decoration: none;
-  color: var(--color-text-primary);
 }
 
 .btn-ghost {
@@ -1752,11 +1802,11 @@ textarea.input {
    ============================================ */
 
 .react-flow__background {
-  background: var(--color-bg) !important;
+  background: #FBF8F3 !important;
 }
 
 .react-flow__controls {
-  background: var(--color-bg-card) !important;
+  background: #FFFFFF !important;
   border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-md) !important;
   box-shadow: var(--shadow-md) !important;
@@ -1769,18 +1819,19 @@ textarea.input {
 }
 
 .react-flow__controls-button:hover {
-  background: var(--color-bg-input) !important;
+  background: #F5EEE6 !important;
   color: var(--color-text-primary) !important;
 }
 
 .react-flow__minimap {
-  background: var(--color-bg-card) !important;
+  background: #FFFFFF !important;
   border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-md) !important;
 }
 
 .react-flow__edge-path {
-  stroke-width: 1.5;
+  stroke: #734E36 !important;
+  stroke-width: 2;
 }
 
 .react-flow__edge-label {

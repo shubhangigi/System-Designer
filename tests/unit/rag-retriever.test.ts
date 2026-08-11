@@ -28,6 +28,6 @@ describe('RAG Pipeline', () => {
   it('builds a retrieved context string for LLM prompt', () => {
     const reqs = 'Need a real-time chat app with WebSockets and Redis caching.';
     const context = buildRetrievedContext(reqs);
-    expect(context).toContain('Relevant Architecture Knowledge');
+    expect(context).toContain('Architectural Guidance');
   });
 });
